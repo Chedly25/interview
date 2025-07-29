@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "framework": "nextjs",
+  "installCommand": "cd frontend && npm install",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://automotive-assistant-backend.railway.app"
+  }
+}

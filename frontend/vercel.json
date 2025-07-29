@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "app/**/*.tsx": {
+      "runtime": "@vercel/next"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://automotive-assistant-backend.railway.app/api/:path*"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://automotive-assistant-backend.railway.app"
+  }
+}

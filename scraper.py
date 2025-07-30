@@ -17,8 +17,12 @@ class LeBonCoinScraper:
         self.base_url = "https://api.leboncoin.fr/finder/classified"
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Content-Type': 'application/json'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+            'Origin': 'https://www.leboncoin.fr',
+            'Referer': 'https://www.leboncoin.fr/'
         })
         
     def search_cars(self):
@@ -33,8 +37,12 @@ class LeBonCoinScraper:
                 },
                 "location": {
                     "departments": [self.department]
-                }
-            }
+                },
+                "keywords": {}
+            },
+            "owner_type": "all",
+            "sort_by": "time",
+            "sort_order": "desc"
         }
         
         cars = []
@@ -44,11 +52,17 @@ class LeBonCoinScraper:
             payload["offset"] = offset
             
             try:
+                logger.info(f"Fetching cars with offset {offset}")
                 response = self.session.post(self.base_url, json=payload)
-                response.raise_for_status()
+                logger.info(f"Response status: {response.status_code}")
+                
+                if response.status_code != 200:
+                    logger.error(f"API returned status {response.status_code}: {response.text}")
+                    break
                 
                 data = response.json()
                 ads = data.get("ads", [])
+                logger.info(f"Found {len(ads)} ads in this batch")
                 
                 if not ads:
                     break

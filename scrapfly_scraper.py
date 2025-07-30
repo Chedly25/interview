@@ -10,7 +10,7 @@ import time
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from database import SessionLocal, Car
+from enhanced_database import SessionLocal, Car
 import logging
 from typing import Dict, List, Optional
 import asyncio
@@ -396,7 +396,7 @@ class ScrapflyLeboncoinScraper:
             car_count = db.query(Car).count()
             if car_count == 0:
                 logger.info("📝 Creating sample data...")
-                from scraper import create_sample_data
+                from sample_data import create_sample_data
                 create_sample_data()
                 logger.info("✅ Sample data created")
             else:

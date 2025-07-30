@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import CarCard from '../components/CarCard'
 import CarFilters from '../components/CarFilters'
+import ScraperControl from '../components/ScraperControl'
 
 interface Car {
   id: string
@@ -81,12 +82,14 @@ export default function Home() {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Voitures d'occasion
+          🚗 Assistant Automobile IA
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Découvrez notre sélection de voitures analysées par l'IA
+          Découvrez notre sélection de voitures analysées par l'IA avec 10 fonctionnalités avancées
         </p>
       </div>
+
+      <ScraperControl />
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-80 flex-shrink-0">

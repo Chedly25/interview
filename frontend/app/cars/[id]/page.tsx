@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import ClaudeAnalysis from '../../../components/ClaudeAnalysis'
+import AIFeaturesPanel from '../../../components/AIFeaturesPanel'
 
 interface Car {
   id: string
@@ -256,11 +257,15 @@ export default function CarDetail() {
         </div>
       )}
 
-      <ClaudeAnalysis
-        analysis={analysis}
-        isLoading={analysisLoading}
-        onAnalyze={handleAnalyze}
-      />
+      <AIFeaturesPanel carId={carId} />
+
+      <div className="mt-8">
+        <ClaudeAnalysis
+          analysis={analysis}
+          isLoading={analysisLoading}
+          onAnalyze={handleAnalyze}
+        />
+      </div>
     </div>
   )
 }

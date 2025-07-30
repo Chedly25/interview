@@ -2,17 +2,22 @@
 
 import { useState } from 'react'
 import { 
-  SparklesIcon, 
-  CameraIcon, 
-  DocumentTextIcon, 
-  ChatBubbleLeftRightIcon,
-  IdentificationIcon,
-  ArrowTrendingUpIcon,
-  HeartIcon,
-  ScaleIcon,
-  WrenchScrewdriverIcon,
-  TrophyIcon
-} from '@heroicons/react/24/outline'
+  Sparkles, 
+  Camera, 
+  FileText, 
+  MessageSquare,
+  CreditCard,
+  TrendingUp,
+  Heart,
+  Scale,
+  Wrench,
+  Trophy,
+  Brain,
+  CheckCircle,
+  AlertTriangle,
+  DollarSign,
+  Cpu
+} from 'lucide-react'
 
 interface AIFeaturesPanelProps {
   carId: string
@@ -26,7 +31,7 @@ const AI_FEATURES = [
   {
     id: 'gem',
     name: 'Détecteur de Pépites',
-    icon: SparklesIcon,
+    icon: Sparkles,
     endpoint: 'gem-score',
     description: 'Identifie les bonnes affaires cachées',
     color: 'bg-yellow-500'
@@ -34,7 +39,7 @@ const AI_FEATURES = [
   {
     id: 'photo',
     name: 'Analyse Photos IA',
-    icon: CameraIcon,
+    icon: Camera,
     endpoint: 'photo-analysis',
     description: 'Analyse visuelle des dommages et équipements',
     color: 'bg-blue-500'
@@ -42,7 +47,7 @@ const AI_FEATURES = [
   {
     id: 'description',
     name: 'Parser Intelligent',
-    icon: DocumentTextIcon,
+    icon: FileText,
     endpoint: 'description-analysis',
     description: 'Analyse intelligente de la description',
     color: 'bg-green-500'
@@ -50,7 +55,7 @@ const AI_FEATURES = [
   {
     id: 'negotiation',
     name: 'Assistant Négociation',
-    icon: ChatBubbleLeftRightIcon,
+    icon: MessageSquare,
     endpoint: 'negotiation-strategy',
     description: 'Stratégies de négociation personnalisées',
     color: 'bg-purple-500'
@@ -58,7 +63,7 @@ const AI_FEATURES = [
   {
     id: 'vin',
     name: 'Décodeur VIN',
-    icon: IdentificationIcon,
+    icon: CreditCard,
     endpoint: 'vin-analysis',
     description: 'Historique et analyse VIN complète',
     color: 'bg-indigo-500'
@@ -66,7 +71,7 @@ const AI_FEATURES = [
   {
     id: 'market',
     name: 'Prédicteur Marché',
-    icon: ArrowTrendingUpIcon,
+    icon: TrendingUp,
     endpoint: 'market-pulse',
     description: 'Prédictions de prix et tendances',
     color: 'bg-red-500'
@@ -74,7 +79,7 @@ const AI_FEATURES = [
   {
     id: 'sentiment',
     name: 'Analyse Sentiment',
-    icon: HeartIcon,
+    icon: Heart,
     endpoint: 'social-sentiment',
     description: 'Sentiment social et réputation',
     color: 'bg-pink-500'
@@ -82,7 +87,7 @@ const AI_FEATURES = [
   {
     id: 'comparison',
     name: 'Comparateur Intelligent',
-    icon: ScaleIcon,
+    icon: Scale,
     endpoint: 'smart-comparison',
     description: 'Comparaison avec véhicules similaires',
     color: 'bg-teal-500'
@@ -90,7 +95,7 @@ const AI_FEATURES = [
   {
     id: 'maintenance',
     name: 'Prophète Maintenance',
-    icon: WrenchScrewdriverIcon,
+    icon: Wrench,
     endpoint: 'maintenance-prediction',
     description: 'Prédiction des coûts de maintenance',
     color: 'bg-orange-500'
@@ -98,7 +103,7 @@ const AI_FEATURES = [
   {
     id: 'investment',
     name: 'Score Investissement',
-    icon: TrophyIcon,
+    icon: Trophy,
     endpoint: 'investment-grade',
     description: 'Potentiel d\'investissement et appréciation',
     color: 'bg-amber-500'
@@ -114,16 +119,28 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
     setLoadingFeatures(prev => ({ ...prev, [feature.id]: true }))
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cars/${carId}/${feature.endpoint}`, {
-        method: 'POST'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-production-84f1.up.railway.app'
+      const fullUrl = `${apiUrl}/api/cars/${carId}/${feature.endpoint}`
+      
+      console.log(`Triggering ${feature.name} analysis:`, fullUrl)
+      
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
+      
+      console.log(`${feature.name} response status:`, response.status)
       
       if (response.ok) {
         const data = await response.json()
+        console.log(`${feature.name} data:`, data)
         setFeaturesData(prev => ({ ...prev, [feature.id]: data }))
         setActiveFeature(feature.id)
       } else {
-        console.error(`Failed to analyze ${feature.name}`)
+        const errorText = await response.text()
+        console.error(`Failed to analyze ${feature.name}:`, response.status, errorText)
       }
     } catch (error) {
       console.error(`Error analyzing ${feature.name}:`, error)
@@ -136,16 +153,29 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
     setLoadingFeatures({ full: true })
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cars/${carId}/full-ai-analysis`, {
-        method: 'POST'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-production-84f1.up.railway.app'
+      const fullUrl = `${apiUrl}/api/cars/${carId}/full-ai-analysis`
+      
+      console.log('Triggering full AI analysis:', fullUrl)
+      
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
       
+      console.log('Full analysis response status:', response.status)
+      
       if (response.ok) {
+        const result = await response.json()
+        console.log('Full analysis result:', result)
+        
         // Refresh all feature data after full analysis
         setTimeout(async () => {
           for (const feature of AI_FEATURES) {
             try {
-              const featureResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cars/${carId}/${feature.endpoint}-insights`)
+              const featureResponse = await fetch(`${apiUrl}/api/cars/${carId}/${feature.endpoint}-insights`)
               if (featureResponse.ok) {
                 const data = await featureResponse.json()
                 setFeaturesData(prev => ({ ...prev, [feature.id]: data }))
@@ -155,6 +185,9 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             }
           }
         }, 3000) // Wait 3 seconds for processing
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to run full analysis:', response.status, errorText)
       }
     } catch (error) {
       console.error('Error running full analysis:', error)
@@ -181,7 +214,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             </div>
             <div className="glass-card p-4 rounded-xl">
               <h4 className="font-bold mb-3 text-gray-900 flex items-center">
-                <span className="mr-2">✨</span> Raisons:
+                <Sparkles className="w-4 h-4 text-yellow-500 mr-2" strokeWidth={2} /> Raisons:
               </h4>
               <div className="space-y-2">
                 {(data.reasons || []).map((reason: string, idx: number) => (
@@ -226,7 +259,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             {data.detected_damage && data.detected_damage.length > 0 && (
               <div className="glass-card p-4 rounded-xl border-l-4 border-red-500">
                 <h4 className="font-bold mb-3 text-red-600 flex items-center">
-                  <span className="mr-2">⚠️</span> Dommages détectés:
+                  <AlertTriangle className="w-4 h-4 text-red-500 mr-2" strokeWidth={2} /> Dommages détectés:
                 </h4>
                 <div className="space-y-2">
                   {data.detected_damage.map((damage: string, idx: number) => (
@@ -242,7 +275,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             {data.detected_features && data.detected_features.length > 0 && (
               <div className="glass-card p-4 rounded-xl border-l-4 border-green-500">
                 <h4 className="font-bold mb-3 text-green-600 flex items-center">
-                  <span className="mr-2">✅</span> Équipements détectés:
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" strokeWidth={2} /> Équipements détectés:
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {data.detected_features.map((feature: string, idx: number) => (
@@ -257,7 +290,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             {data.estimated_repair_costs && (
               <div className="glass-card p-4 rounded-xl bg-red-50/50">
                 <h4 className="font-bold mb-3 text-red-600 flex items-center">
-                  <span className="mr-2">💰</span> Coûts de réparation estimés:
+                  <DollarSign className="w-4 h-4 text-red-500 mr-2" strokeWidth={2} /> Coûts de réparation estimés:
                 </h4>
                 <div className="text-center">
                   <div className="text-3xl font-black text-gradient-secondary mb-1">
@@ -414,7 +447,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gradient-ai rounded-2xl flex items-center justify-center float">
-            <span className="text-2xl">🤖</span>
+            <Brain className="w-6 h-6 text-white" strokeWidth={2} />
           </div>
           <div>
             <h2 className="text-3xl font-black text-gradient mb-1">
@@ -434,7 +467,10 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
               Analyse en cours...
             </>
           ) : (
-            <>🚀 Analyse Complète</>
+            <>
+              <Cpu className="w-4 h-4 mr-2" strokeWidth={2} />
+              Analyse Complète
+            </>
           )}
         </button>
       </div>
@@ -459,7 +495,7 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             >
               {hasData && (
                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-success rounded-full flex items-center justify-center pulse-glow">
-                  <span className="text-white text-xs font-bold">✓</span>
+                  <CheckCircle className="w-3 h-3 text-white" strokeWidth={2} />
                 </div>
               )}
               

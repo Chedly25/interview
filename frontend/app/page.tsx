@@ -4,6 +4,20 @@ import { useState, useEffect, useCallback } from 'react'
 import CarCard from '../components/CarCard'
 import CarFilters from '../components/CarFilters'
 import ScraperControl from '../components/ScraperControl'
+import { 
+  Cpu, 
+  Camera, 
+  TrendingUp, 
+  Clock, 
+  BarChart3, 
+  Zap,
+  Sparkles,
+  Brain,
+  RefreshCw,
+  Search,
+  Filter,
+  ArrowRight
+} from 'lucide-react'
 
 interface Car {
   id: string
@@ -47,13 +61,23 @@ export default function Home() {
         params.append('department', filters.department)
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cars?${params}`)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-production-84f1.up.railway.app'
+      const fullUrl = `${apiUrl}/api/cars?${params}`
+      
+      console.log('Fetching cars from:', fullUrl)
+      
+      const response = await fetch(fullUrl)
+      console.log('Response status:', response.status)
+      
       if (response.ok) {
         const data: ApiResponse = await response.json()
+        console.log('API response data:', data)
         setCars(data.cars)
         setTotalCars(data.total)
       } else {
-        console.error('Failed to fetch cars')
+        console.error('Failed to fetch cars:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
       }
     } catch (error) {
       console.error('Error fetching cars:', error)
@@ -85,8 +109,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-primary opacity-10"></div>
         <div className="relative px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center fade-in">
-            <div className="inline-flex items-center justify-center p-2 bg-gradient-primary rounded-full mb-6 float">
-              <span className="text-2xl">🤖</span>
+            <div className="inline-flex items-center justify-center p-4 bg-gradient-primary rounded-2xl mb-6 float shadow-2xl">
+              <Brain className="w-8 h-8 text-white" strokeWidth={2} />
             </div>
             <h1 className="text-5xl md:text-6xl font-black text-gradient mb-6 leading-tight">
               Assistant Automobile IA
@@ -132,7 +156,7 @@ export default function Home() {
             <div className="glass-card p-6 rounded-2xl">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                 <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">⚡</span>
+                  <BarChart3 className="w-4 h-4 text-white" strokeWidth={2} />
                 </div>
                 Trier par
               </h3>
@@ -141,11 +165,11 @@ export default function Home() {
                 onChange={(e) => handleSortChange(e.target.value)}
                 className="input-modern w-full"
               >
-                <option value="date_added">🕒 Date d'ajout</option>
-                <option value="price_asc">💰 Prix croissant</option>
-                <option value="price_desc">💎 Prix décroissant</option>
-                <option value="year_desc">🆕 Année décroissante</option>
-                <option value="mileage_asc">🏃 Kilométrage croissant</option>
+                <option value="date_added">Date d'ajout</option>
+                <option value="price_asc">Prix croissant</option>
+                <option value="price_desc">Prix décroissant</option>
+                <option value="year_desc">Année décroissante</option>
+                <option value="mileage_asc">Kilométrage croissant</option>
               </select>
             </div>
 
@@ -153,25 +177,31 @@ export default function Home() {
             <div className="glass-card p-6 rounded-2xl">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                 <div className="w-8 h-8 bg-gradient-ai rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">🧠</span>
+                  <Cpu className="w-4 h-4 text-white" strokeWidth={2} />
                 </div>
                 Fonctionnalités IA
               </h3>
               <div className="space-y-3">
                 {[
-                  { icon: '🌟', name: 'Détecteur de Pépites', desc: 'Trouve les bonnes affaires' },
-                  { icon: '📷', name: 'Analyse Photos', desc: 'Détecte les défauts visuels' },
-                  { icon: '💬', name: 'Assistant Négociation', desc: 'Stratégies personnalisées' },
-                  { icon: '📈', name: 'Prédicteur Marché', desc: 'Évolution des prix' },
-                ].map((feature, idx) => (
-                  <div key={idx} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/20 transition-all">
-                    <span className="text-lg">{feature.icon}</span>
-                    <div>
-                      <div className="font-semibold text-sm text-gray-900">{feature.name}</div>
-                      <div className="text-xs text-gray-600">{feature.desc}</div>
+                  { icon: Sparkles, name: 'Détecteur de Pépites', desc: 'Trouve les bonnes affaires', color: 'text-yellow-500' },
+                  { icon: Camera, name: 'Analyse Photos', desc: 'Détecte les défauts visuels', color: 'text-blue-500' },
+                  { icon: Brain, name: 'Assistant Négociation', desc: 'Stratégies personnalisées', color: 'text-purple-500' },
+                  { icon: TrendingUp, name: 'Prédicteur Marché', desc: 'Évolution des prix', color: 'text-green-500' },
+                ].map((feature, idx) => {
+                  const IconComponent = feature.icon
+                  return (
+                    <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/20 transition-all cursor-pointer group">
+                      <div className={`p-2 rounded-lg bg-white shadow-sm group-hover:shadow-md transition-all`}>
+                        <IconComponent className={`w-4 h-4 ${feature.color}`} strokeWidth={2} />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm text-gray-900">{feature.name}</div>
+                        <div className="text-xs text-gray-600">{feature.desc}</div>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-gray-600 ml-auto opacity-0 group-hover:opacity-100 transition-all" />
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -200,6 +230,7 @@ export default function Home() {
                     </div>
                     <div className="hidden md:flex items-center space-x-2">
                       <div className="w-3 h-3 bg-gradient-success rounded-full pulse-glow"></div>
+                      <Zap className="w-4 h-4 text-green-500" />
                       <span className="text-sm font-medium text-gray-600">Données en temps réel</span>
                     </div>
                   </div>
@@ -219,16 +250,23 @@ export default function Home() {
                   <div className="text-center py-16">
                     <div className="glass-card p-12 rounded-2xl max-w-md mx-auto">
                       <div className="w-20 h-20 bg-gradient-secondary rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span className="text-3xl">🔍</span>
+                        <Search className="w-8 h-8 text-white" strokeWidth={2} />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">
                         Aucune voiture trouvée
                       </h3>
                       <p className="text-gray-600 mb-6">
-                        Essayez d'ajuster vos filtres ou lancez une nouvelle collecte de données.
+                        Vérifiez la console pour les erreurs API ou ajustez vos filtres.
                       </p>
-                      <button className="btn-primary">
-                        Réinitialiser les filtres
+                      <button 
+                        onClick={() => {
+                          setFilters({ maxPrice: 50000, department: '' })
+                          fetchCars()
+                        }}
+                        className="btn-primary flex items-center space-x-2 mx-auto"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Réinitialiser les filtres</span>
                       </button>
                     </div>
                   </div>

@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  PlayIcon, 
-  StopIcon, 
-  ChartBarIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon 
-} from '@heroicons/react/24/outline'
+  Play, 
+  Stop, 
+  BarChart3,
+  AlertTriangle,
+  CheckCircle,
+  Car,
+  Star,
+  RefreshCw,
+  Rocket,
+  FlaskConical
+} from 'lucide-react'
 
 interface ScraperStatus {
   total_cars: number
@@ -93,10 +98,10 @@ export default function ScraperControl() {
   }
 
   const getStatusIcon = () => {
-    if (!status) return <ChartBarIcon className="w-6 h-6 text-white" />
-    if (status.status === 'healthy') return <CheckCircleIcon className="w-6 h-6 text-white" />
-    if (status.status === 'needs_data') return <ExclamationTriangleIcon className="w-6 h-6 text-white" />
-    return <ChartBarIcon className="w-6 h-6 text-white" />
+    if (!status) return <BarChart3 className="w-6 h-6 text-white" strokeWidth={2} />
+    if (status.status === 'healthy') return <CheckCircle className="w-6 h-6 text-white" strokeWidth={2} />
+    if (status.status === 'needs_data') return <AlertTriangle className="w-6 h-6 text-white" strokeWidth={2} />
+    return <BarChart3 className="w-6 h-6 text-white" strokeWidth={2} />
   }
 
   return (
@@ -126,7 +131,7 @@ export default function ScraperControl() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="glass-card p-6 rounded-2xl text-center scale-in">
             <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white text-xl font-bold">🚗</span>
+              <Car className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
             <div className="text-3xl font-black text-gradient mb-1">
               {status.total_cars.toLocaleString('fr-FR')}
@@ -138,7 +143,7 @@ export default function ScraperControl() {
           
           <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.1s'}}>
             <div className="w-12 h-12 bg-gradient-success rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white text-xl font-bold">✓</span>
+              <CheckCircle className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
             <div className="text-3xl font-black text-gradient mb-1">
               {status.active_cars.toLocaleString('fr-FR')}
@@ -150,7 +155,7 @@ export default function ScraperControl() {
           
           <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.2s'}}>
             <div className="w-12 h-12 bg-gradient-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white text-xl font-bold">⭐</span>
+              <Star className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
             <div className="text-3xl font-black text-gradient mb-1">
               {status.recent_cars_24h.toLocaleString('fr-FR')}
@@ -162,9 +167,13 @@ export default function ScraperControl() {
           
           <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.3s'}}>
             <div className={`w-12 h-12 ${status.status === 'healthy' ? 'bg-gradient-success' : status.status === 'needs_data' ? 'bg-gradient-warning' : 'bg-gradient-primary'} rounded-2xl flex items-center justify-center mx-auto mb-3`}>
-              <span className="text-white text-xl font-bold">
-                {status.status === 'healthy' ? '✅' : status.status === 'needs_data' ? '⚠️' : '🔄'}
-              </span>
+              {status.status === 'healthy' ? (
+                <CheckCircle className="w-6 h-6 text-white" strokeWidth={2} />
+              ) : status.status === 'needs_data' ? (
+                <AlertTriangle className="w-6 h-6 text-white" strokeWidth={2} />
+              ) : (
+                <RefreshCw className="w-6 h-6 text-white" strokeWidth={2} />
+              )}
             </div>
             <div className="text-lg font-bold text-gradient mb-1">
               {status.status === 'healthy' ? 'Opérationnel' : 
@@ -190,8 +199,9 @@ export default function ScraperControl() {
             </>
           ) : (
             <>
-              <PlayIcon className="w-5 h-5" />
-              <span>🚀 Lancer Collecte Complète</span>
+              <Play className="w-5 h-5" strokeWidth={2} />
+              <Rocket className="w-4 h-4" strokeWidth={2} />
+              <span>Lancer Collecte Complète</span>
             </>
           )}
         </button>
@@ -201,15 +211,16 @@ export default function ScraperControl() {
           disabled={loading}
           className="btn-secondary flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
-          <ChartBarIcon className="w-5 h-5" />
-          <span>🧪 Test Scrapfly</span>
+          <FlaskConical className="w-5 h-5" strokeWidth={2} />
+          <span>Test Scrapfly</span>
         </button>
 
         <button
           onClick={fetchStatus}
           className="btn-secondary flex items-center justify-center space-x-2 px-8"
         >
-          <span>🔄 Actualiser</span>
+          <RefreshCw className="w-4 h-4" strokeWidth={2} />
+          <span>Actualiser</span>
         </button>
       </div>
 
@@ -217,7 +228,7 @@ export default function ScraperControl() {
         <div className="mt-6 glass-card p-6 rounded-2xl border-l-4 border-yellow-500 slide-up">
           <div className="flex items-start space-x-4">
             <div className="w-12 h-12 bg-gradient-warning rounded-2xl flex items-center justify-center flex-shrink-0">
-              <ExclamationTriangleIcon className="w-6 h-6 text-white" />
+              <AlertTriangle className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
@@ -235,7 +246,7 @@ export default function ScraperControl() {
         <div className="mt-6 glass-card p-6 rounded-2xl border-l-4 border-green-500 slide-up">
           <div className="flex items-start space-x-4">
             <div className="w-12 h-12 bg-gradient-success rounded-2xl flex items-center justify-center flex-shrink-0 pulse-glow">
-              <CheckCircleIcon className="w-6 h-6 text-white" />
+              <CheckCircle className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">

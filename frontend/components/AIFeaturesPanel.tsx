@@ -7,7 +7,7 @@ import {
   DocumentTextIcon, 
   ChatBubbleLeftRightIcon,
   IdentificationIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   HeartIcon,
   ScaleIcon,
   WrenchScrewdriverIcon,
@@ -66,7 +66,7 @@ const AI_FEATURES = [
   {
     id: 'market',
     name: 'Prédicteur Marché',
-    icon: TrendingUpIcon,
+    icon: ArrowTrendingUpIcon,
     endpoint: 'market-pulse',
     description: 'Prédictions de prix et tendances',
     color: 'bg-red-500'

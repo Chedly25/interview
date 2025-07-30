@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -7,14 +7,17 @@ import uuid
 from datetime import datetime, timedelta
 import os
 import anthropic
+import threading
+import time
 
 from database import get_database, Car, Analysis, create_tables
+from scraper import LeBonCoinScraper
 
 app = FastAPI(title="Automotive Assistant API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "https://*.vercel.app", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -149,6 +152,62 @@ def analyze_car(car_id: str, db: Session = Depends(get_database)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+def run_scraper_background():
+    """Run scraper in background"""
+    try:
+        scraper = LeBonCoinScraper(department="69", max_cars=100)
+        scraper.run()
+        return {"status": "success", "message": "Scraper completed successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/scrape")
+def trigger_scraper(background_tasks: BackgroundTasks):
+    """Manually trigger the scraper"""
+    background_tasks.add_task(run_scraper_background)
+    return {"status": "started", "message": "Scraper started in background"}
+
+@app.get("/api/scrape/status")
+def scraper_status(db: Session = Depends(get_database)):
+    """Get scraper status and car count"""
+    total_cars = db.query(Car).count()
+    active_cars = db.query(Car).filter(Car.is_active == True).count()
+    latest_car = db.query(Car).order_by(Car.first_seen.desc()).first()
+    
+    return {
+        "total_cars": total_cars,
+        "active_cars": active_cars,
+        "latest_scrape": latest_car.first_seen.isoformat() if latest_car else None
+    }
+
+def automatic_scraper():
+    """Run scraper every 30 minutes"""
+    while True:
+        try:
+            print("🚗 Running automatic scraper...")
+            scraper = LeBonCoinScraper(department="69", max_cars=100)
+            scraper.run()
+            print("✅ Automatic scraper completed")
+        except Exception as e:
+            print(f"❌ Automatic scraper error: {e}")
+        
+        # Wait 30 minutes
+        time.sleep(1800)
+
+@app.on_event("startup")
+async def startup_event():
+    """Run on application startup"""
+    print("🚀 Starting Automotive Assistant API...")
+    create_tables()
+    
+    # Run scraper immediately on startup
+    threading.Thread(target=run_scraper_background, daemon=True).start()
+    
+    # Start automatic scraper in background
+    threading.Thread(target=automatic_scraper, daemon=True).start()
+    
+    print("✅ API started with automatic scraping enabled")
 
 @app.get("/health")
 def health_check():

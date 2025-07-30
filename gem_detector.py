@@ -8,9 +8,13 @@ import os
 
 class HiddenGemDetector:
     def __init__(self):
-        self.anthropic_client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        ) if os.getenv("ANTHROPIC_API_KEY") else None
+        try:
+            self.anthropic_client = anthropic.Anthropic(
+                api_key=os.getenv("ANTHROPIC_API_KEY")
+            ) if os.getenv("ANTHROPIC_API_KEY") else None
+        except Exception as e:
+            print(f"Warning: Anthropic client initialization failed: {e}")
+            self.anthropic_client = None
         
         # French keywords indicating motivated sellers
         self.motivated_seller_keywords = [

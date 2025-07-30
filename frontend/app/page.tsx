@@ -39,7 +39,17 @@ interface ApiResponse {
 export default function Home() {
   const [cars, setCars] = useState<Car[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ maxPrice: 50000, department: '' })
+  const [filters, setFilters] = useState({ 
+    maxPrice: 100000, 
+    minPrice: 0,
+    department: '',
+    minYear: 1990,
+    maxYear: new Date().getFullYear(),
+    minMileage: 0,
+    maxMileage: 300000,
+    fuelTypes: [] as string[],
+    sellerTypes: [] as string[]
+  })
   const [sortBy, setSortBy] = useState('date_added')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCars, setTotalCars] = useState(0)
@@ -54,17 +64,55 @@ export default function Home() {
         limit: CARS_PER_PAGE.toString(),
       })
 
-      if (filters.maxPrice < 50000) {
+      // Price filters
+      if (filters.minPrice > 0) {
+        params.append('min_price', filters.minPrice.toString())
+      }
+      if (filters.maxPrice < 100000) {
         params.append('max_price', filters.maxPrice.toString())
       }
+
+      // Department filter
       if (filters.department) {
         params.append('department', filters.department)
+      }
+
+      // Year filters
+      if (filters.minYear > 1990) {
+        params.append('min_year', filters.minYear.toString())
+      }
+      if (filters.maxYear < new Date().getFullYear()) {
+        params.append('max_year', filters.maxYear.toString())
+      }
+
+      // Mileage filters
+      if (filters.minMileage > 0) {
+        params.append('min_mileage', filters.minMileage.toString())
+      }
+      if (filters.maxMileage < 300000) {
+        params.append('max_mileage', filters.maxMileage.toString())
+      }
+
+      // Fuel type filters
+      if (filters.fuelTypes.length > 0) {
+        filters.fuelTypes.forEach(fuel => params.append('fuel_type', fuel))
+      }
+
+      // Seller type filters
+      if (filters.sellerTypes.length > 0) {
+        filters.sellerTypes.forEach(seller => params.append('seller_type', seller))
+      }
+
+      // Sort parameter
+      if (sortBy) {
+        params.append('sort', sortBy)
       }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://interview-production-84f1.up.railway.app'
       const fullUrl = `${apiUrl}/api/cars?${params}`
       
       console.log('Fetching cars from:', fullUrl)
+      console.log('Applied filters:', filters)
       
       const response = await fetch(fullUrl)
       console.log('Response status:', response.status)
@@ -84,13 +132,23 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, filters])
+  }, [currentPage, filters, sortBy])
 
   useEffect(() => {
     fetchCars()
   }, [fetchCars])
 
-  const handleFiltersChange = (newFilters: { maxPrice: number; department: string }) => {
+  const handleFiltersChange = (newFilters: {
+    maxPrice: number
+    minPrice: number
+    department: string
+    minYear: number
+    maxYear: number
+    minMileage: number
+    maxMileage: number
+    fuelTypes: string[]
+    sellerTypes: string[]
+  }) => {
     setFilters(newFilters)
     setCurrentPage(1)
   }
@@ -260,7 +318,17 @@ export default function Home() {
                       </p>
                       <button 
                         onClick={() => {
-                          setFilters({ maxPrice: 50000, department: '' })
+                          setFilters({ 
+                            maxPrice: 100000, 
+                            minPrice: 0,
+                            department: '',
+                            minYear: 1990,
+                            maxYear: new Date().getFullYear(),
+                            minMileage: 0,
+                            maxMileage: 300000,
+                            fuelTypes: [],
+                            sellerTypes: []
+                          })
                           fetchCars()
                         }}
                         className="btn-primary flex items-center space-x-2 mx-auto"

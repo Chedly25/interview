@@ -11,9 +11,13 @@ import uuid
 
 class MarketPulsePredictor:
     def __init__(self):
-        self.anthropic_client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        ) if os.getenv("ANTHROPIC_API_KEY") else None
+        try:
+            self.anthropic_client = anthropic.Anthropic(
+                api_key=os.getenv("ANTHROPIC_API_KEY")
+            ) if os.getenv("ANTHROPIC_API_KEY") else None
+        except Exception as e:
+            print(f"Warning: Anthropic client initialization failed in market_pulse_predictor: {e}")
+            self.anthropic_client = None
         
         # Seasonal factors for different car types
         self.seasonal_multipliers = {

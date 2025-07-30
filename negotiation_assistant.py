@@ -9,9 +9,13 @@ import uuid
 
 class NegotiationAssistantPro:
     def __init__(self):
-        self.anthropic_client = anthropic.Anthropic(
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        ) if os.getenv("ANTHROPIC_API_KEY") else None
+        try:
+            self.anthropic_client = anthropic.Anthropic(
+                api_key=os.getenv("ANTHROPIC_API_KEY")
+            ) if os.getenv("ANTHROPIC_API_KEY") else None
+        except Exception as e:
+            print(f"Warning: Anthropic client initialization failed in negotiation_assistant: {e}")
+            self.anthropic_client = None
         
         # French negotiation patterns and cultural insights
         self.seller_psychology_patterns = {

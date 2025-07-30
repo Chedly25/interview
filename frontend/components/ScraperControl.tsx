@@ -93,85 +93,104 @@ export default function ScraperControl() {
   }
 
   const getStatusIcon = () => {
-    if (!status) return <ChartBarIcon className="w-5 h-5" />
-    if (status.status === 'healthy') return <CheckCircleIcon className="w-5 h-5 text-green-500" />
-    if (status.status === 'needs_data') return <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
-    return <ChartBarIcon className="w-5 h-5" />
+    if (!status) return <ChartBarIcon className="w-6 h-6 text-white" />
+    if (status.status === 'healthy') return <CheckCircleIcon className="w-6 h-6 text-white" />
+    if (status.status === 'needs_data') return <ExclamationTriangleIcon className="w-6 h-6 text-white" />
+    return <ChartBarIcon className="w-6 h-6 text-white" />
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          {getStatusIcon()}
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Collecteur de Données LeBonCoin
-          </h2>
+    <div className="glass-card rounded-2xl p-8 mb-8 fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center float">
+            {getStatusIcon()}
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-gradient mb-1">
+              Collecteur LeBonCoin
+            </h2>
+            <p className="text-gray-600 font-medium">Système de collecte automatique • Temps réel</p>
+          </div>
         </div>
         
         {scraperRunning && (
-          <div className="flex items-center space-x-2 text-blue-600">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span className="text-sm font-medium">Collecte en cours...</span>
+          <div className="glass-card px-4 py-2 rounded-xl flex items-center space-x-2">
+            <div className="loading-spinner"></div>
+            <span className="text-sm font-bold text-gradient">Collecte en cours...</span>
           </div>
         )}
       </div>
 
       {status && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="glass-card p-6 rounded-2xl text-center scale-in">
+            <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-white text-xl font-bold">🚗</span>
+            </div>
+            <div className="text-3xl font-black text-gradient mb-1">
               {status.total_cars.toLocaleString('fr-FR')}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 font-medium">
               Total voitures
             </div>
           </div>
           
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.1s'}}>
+            <div className="w-12 h-12 bg-gradient-success rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-white text-xl font-bold">✓</span>
+            </div>
+            <div className="text-3xl font-black text-gradient mb-1">
               {status.active_cars.toLocaleString('fr-FR')}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 font-medium">
               Actives
             </div>
           </div>
           
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.2s'}}>
+            <div className="w-12 h-12 bg-gradient-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-white text-xl font-bold">⭐</span>
+            </div>
+            <div className="text-3xl font-black text-gradient mb-1">
               {status.recent_cars_24h.toLocaleString('fr-FR')}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 font-medium">
               Nouvelles (24h)
             </div>
           </div>
           
-          <div className="text-center">
-            <div className={`text-lg font-semibold ${getStatusColor()}`}>
-              {status.status === 'healthy' ? '✅ Opérationnel' : 
-               status.status === 'needs_data' ? '⚠️ Données requises' : '🔄 En cours'}
+          <div className="glass-card p-6 rounded-2xl text-center scale-in" style={{animationDelay: '0.3s'}}>
+            <div className={`w-12 h-12 ${status.status === 'healthy' ? 'bg-gradient-success' : status.status === 'needs_data' ? 'bg-gradient-warning' : 'bg-gradient-primary'} rounded-2xl flex items-center justify-center mx-auto mb-3`}>
+              <span className="text-white text-xl font-bold">
+                {status.status === 'healthy' ? '✅' : status.status === 'needs_data' ? '⚠️' : '🔄'}
+              </span>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-lg font-bold text-gradient mb-1">
+              {status.status === 'healthy' ? 'Opérationnel' : 
+               status.status === 'needs_data' ? 'Données requises' : 'En cours'}
+            </div>
+            <div className="text-sm text-gray-600 font-medium">
               Statut
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={runScraper}
           disabled={loading || scraperRunning}
-          className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
           {loading || scraperRunning ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="loading-spinner"></div>
               <span>Lancement...</span>
             </>
           ) : (
             <>
-              <PlayIcon className="w-4 h-4" />
+              <PlayIcon className="w-5 h-5" />
               <span>🚀 Lancer Collecte Complète</span>
             </>
           )}
@@ -180,30 +199,32 @@ export default function ScraperControl() {
         <button
           onClick={testScrapfly}
           disabled={loading}
-          className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-md transition-colors disabled:opacity-50"
+          className="btn-secondary flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
-          <ChartBarIcon className="w-4 h-4" />
+          <ChartBarIcon className="w-5 h-5" />
           <span>🧪 Test Scrapfly</span>
         </button>
 
         <button
           onClick={fetchStatus}
-          className="flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-md transition-colors"
+          className="btn-secondary flex items-center justify-center space-x-2 px-8"
         >
           <span>🔄 Actualiser</span>
         </button>
       </div>
 
       {status && status.status === 'needs_data' && (
-        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-          <div className="flex items-start space-x-3">
-            <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+        <div className="mt-6 glass-card p-6 rounded-2xl border-l-4 border-yellow-500 slide-up">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-gradient-warning rounded-2xl flex items-center justify-center flex-shrink-0">
+              <ExclamationTriangleIcon className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
                 Aucune donnée disponible
               </h3>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                Lancez la collecte pour récupérer les données LeBonCoin. Le processus prend quelques minutes.
+              <p className="text-gray-700 leading-relaxed">
+                Lancez la collecte pour récupérer les données LeBonCoin. Le processus prend quelques minutes et utilise notre technologie Scrapfly avancée.
               </p>
             </div>
           </div>
@@ -211,15 +232,18 @@ export default function ScraperControl() {
       )}
 
       {status && status.total_cars > 0 && (
-        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-          <div className="flex items-start space-x-3">
-            <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+        <div className="mt-6 glass-card p-6 rounded-2xl border-l-4 border-green-500 slide-up">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-gradient-success rounded-2xl flex items-center justify-center flex-shrink-0 pulse-glow">
+              <CheckCircleIcon className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
-                Données disponibles
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Système opérationnel
               </h3>
-              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                {status.total_cars} voitures collectées. Le collecteur automatique fonctionne toutes les 30 minutes.
+              <p className="text-gray-700 leading-relaxed">
+                <span className="font-bold text-gradient">{status.total_cars.toLocaleString('fr-FR')}</span> voitures collectées avec succès. 
+                Le collecteur automatique fonctionne toutes les 30 minutes pour maintenir les données à jour.
               </p>
             </div>
           </div>

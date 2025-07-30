@@ -170,29 +170,36 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
     switch (feature.id) {
       case 'gem':
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-600">
-                {data.gem_score}/100
+              <div className="w-24 h-24 bg-gradient-warning rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-3xl font-black text-white">
+                  {data.gem_score}
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Score Pépite</div>
+              <div className="text-lg font-bold text-gradient">Score Pépite: {data.gem_score}/100</div>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">Raisons:</h4>
-              <ul className="list-disc list-inside space-y-1">
+            <div className="glass-card p-4 rounded-xl">
+              <h4 className="font-bold mb-3 text-gray-900 flex items-center">
+                <span className="mr-2">✨</span> Raisons:
+              </h4>
+              <div className="space-y-2">
                 {(data.reasons || []).map((reason: string, idx: number) => (
-                  <li key={idx} className="text-sm">{reason}</li>
+                  <div key={idx} className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-gradient-warning rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-700">{reason}</span>
+                  </div>
                 ))}
-              </ul>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Potentiel profit:</span>
-                <span className="ml-2">{data.profit_potential}€</span>
               </div>
-              <div>
-                <span className="font-medium">Confiance:</span>
-                <span className="ml-2">{Math.round((data.confidence_level || 0) * 100)}%</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="glass-card p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-gradient mb-1">{data.profit_potential}€</div>
+                <div className="text-sm text-gray-600 font-medium">Potentiel profit</div>
+              </div>
+              <div className="glass-card p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-gradient mb-1">{Math.round((data.confidence_level || 0) * 100)}%</div>
+                <div className="text-sm text-gray-600 font-medium">Confiance</div>
               </div>
             </div>
           </div>
@@ -200,49 +207,63 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
 
       case 'photo':
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {data.overall_condition_score}/10
+              <div className="glass-card p-4 rounded-xl text-center">
+                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-xl font-black text-white">{data.overall_condition_score}</span>
                 </div>
-                <div className="text-sm text-gray-600">État général</div>
+                <div className="text-sm text-gray-600 font-medium">État général /10</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {data.honesty_score}/10
+              <div className="glass-card p-4 rounded-xl text-center">
+                <div className="w-16 h-16 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-xl font-black text-white">{data.honesty_score}</span>
                 </div>
-                <div className="text-sm text-gray-600">Honnêteté photos</div>
+                <div className="text-sm text-gray-600 font-medium">Honnêteté photos /10</div>
               </div>
             </div>
             
             {data.detected_damage && data.detected_damage.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2 text-red-600">Dommages détectés:</h4>
-                <ul className="list-disc list-inside space-y-1">
+              <div className="glass-card p-4 rounded-xl border-l-4 border-red-500">
+                <h4 className="font-bold mb-3 text-red-600 flex items-center">
+                  <span className="mr-2">⚠️</span> Dommages détectés:
+                </h4>
+                <div className="space-y-2">
                   {data.detected_damage.map((damage: string, idx: number) => (
-                    <li key={idx} className="text-sm">{damage}</li>
+                    <div key={idx} className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-sm text-gray-700">{damage}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
             
             {data.detected_features && data.detected_features.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2 text-green-600">Équipements détectés:</h4>
-                <ul className="list-disc list-inside space-y-1">
+              <div className="glass-card p-4 rounded-xl border-l-4 border-green-500">
+                <h4 className="font-bold mb-3 text-green-600 flex items-center">
+                  <span className="mr-2">✅</span> Équipements détectés:
+                </h4>
+                <div className="flex flex-wrap gap-2">
                   {data.detected_features.map((feature: string, idx: number) => (
-                    <li key={idx} className="text-sm">{feature}</li>
+                    <span key={idx} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                      {feature}
+                    </span>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
             
             {data.estimated_repair_costs && (
-              <div className="bg-gray-50 p-3 rounded">
-                <h4 className="font-semibold mb-2">Coûts de réparation estimés:</h4>
-                <div className="text-lg font-bold text-red-600">
-                  {data.estimated_repair_costs.total_estimated}€
+              <div className="glass-card p-4 rounded-xl bg-red-50/50">
+                <h4 className="font-bold mb-3 text-red-600 flex items-center">
+                  <span className="mr-2">💰</span> Coûts de réparation estimés:
+                </h4>
+                <div className="text-center">
+                  <div className="text-3xl font-black text-gradient-secondary mb-1">
+                    {data.estimated_repair_costs.total_estimated}€
+                  </div>
+                  <div className="text-sm text-gray-600">Estimation totale</div>
                 </div>
               </div>
             )}
@@ -251,12 +272,14 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
 
       case 'description':
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {data.seller_credibility}%
+              <div className="w-20 h-20 bg-gradient-success rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-2xl font-black text-white">
+                  {data.seller_credibility}%
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Crédibilité vendeur</div>
+              <div className="text-lg font-bold text-gradient">Crédibilité vendeur</div>
             </div>
             
             {data.detected_options && data.detected_options.length > 0 && (
@@ -387,29 +410,37 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          🤖 Analyse IA Complète
-        </h2>
+    <div className="glass-card rounded-2xl p-8 fade-in">
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-ai rounded-2xl flex items-center justify-center float">
+            <span className="text-2xl">🤖</span>
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-gradient mb-1">
+              Analyse IA Complète
+            </h2>
+            <p className="text-gray-600 font-medium">Intelligence artificielle avancée • 10 fonctionnalités</p>
+          </div>
+        </div>
         <button
           onClick={triggerFullAnalysis}
           disabled={loadingFeatures.full}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-md transition-all disabled:opacity-50"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loadingFeatures.full ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
+              <div className="loading-spinner inline-block mr-2"></div>
               Analyse en cours...
             </>
           ) : (
-            '🚀 Analyse Complète'
+            <>🚀 Analyse Complète</>
           )}
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        {AI_FEATURES.map((feature) => {
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {AI_FEATURES.map((feature, index) => {
           const IconComponent = feature.icon
           const isLoading = loadingFeatures[feature.id]
           const hasData = featuresData[feature.id]
@@ -419,26 +450,32 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
               key={feature.id}
               onClick={() => hasData ? setActiveFeature(feature.id) : triggerFeatureAnalysis(feature)}
               disabled={isLoading}
-              className={`relative p-3 rounded-lg border-2 transition-all text-center ${
+              className={`relative glass-card p-4 rounded-2xl transition-all text-center scale-in card-hover group ${
                 activeFeature === feature.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                  ? 'ring-2 ring-blue-500 bg-blue-50/80'
+                  : ''
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              style={{animationDelay: `${index * 0.1}s`}}
             >
               {hasData && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-success rounded-full flex items-center justify-center pulse-glow">
+                  <span className="text-white text-xs font-bold">✓</span>
+                </div>
               )}
               
-              <div className={`w-8 h-8 ${feature.color} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+              <div className={`w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
                 {isLoading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="loading-spinner"></div>
                 ) : (
-                  <IconComponent className="w-4 h-4 text-white" />
+                  <IconComponent className="w-6 h-6 text-white" />
                 )}
               </div>
               
-              <div className="text-xs font-medium text-gray-900 dark:text-white">
+              <div className="text-sm font-bold text-gray-900 mb-1">
                 {feature.name}
+              </div>
+              <div className="text-xs text-gray-600 leading-tight">
+                {feature.description}
               </div>
             </button>
           )
@@ -446,22 +483,22 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
       </div>
 
       {activeFeature && (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-          <div className="flex items-center mb-4">
+        <div className="glass-card rounded-2xl p-8 slide-up">
+          <div className="flex items-center mb-6">
             {(() => {
               const feature = AI_FEATURES.find(f => f.id === activeFeature)
               if (!feature) return null
               const IconComponent = feature.icon
               return (
                 <>
-                  <div className={`w-8 h-8 ${feature.color} rounded-lg flex items-center justify-center mr-3`}>
-                    <IconComponent className="w-4 h-4 text-white" />
+                  <div className={`w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mr-4 float`}>
+                    <IconComponent className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-2xl font-bold text-gradient mb-2">
                       {feature.name}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-600 font-medium">
                       {feature.description}
                     </p>
                   </div>
@@ -470,10 +507,12 @@ export default function AIFeaturesPanel({ carId }: AIFeaturesPanelProps) {
             })()}
           </div>
           
-          {(() => {
-            const feature = AI_FEATURES.find(f => f.id === activeFeature)
-            return feature ? renderFeatureContent(feature) : null
-          })()}
+          <div className="bg-white/50 rounded-2xl p-6">
+            {(() => {
+              const feature = AI_FEATURES.find(f => f.id === activeFeature)
+              return feature ? renderFeatureContent(feature) : null
+            })()}
+          </div>
         </div>
       )}
     </div>

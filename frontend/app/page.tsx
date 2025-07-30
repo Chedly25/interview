@@ -17,7 +17,8 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Heart
+  Heart,
+  Bell
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -196,8 +197,8 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Favorites Link */}
-            <div className="scale-in" style={{animationDelay: '0.3s'}}>
+            {/* Quick Links */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center scale-in" style={{animationDelay: '0.3s'}}>
               <Link 
                 href="/favorites" 
                 className="inline-flex items-center space-x-3 glass-card p-4 rounded-2xl hover:bg-red-50/50 transition-all group"
@@ -211,6 +212,24 @@ export default function Home() {
                   </div>
                   <div className="text-sm text-gray-600">
                     Vos voitures sauvegardées
+                  </div>
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gradient group-hover:translate-x-1 transition-all" strokeWidth={2} />
+              </Link>
+              
+              <Link 
+                href="/alerts" 
+                className="inline-flex items-center space-x-3 glass-card p-4 rounded-2xl hover:bg-yellow-50/50 transition-all group"
+              >
+                <div className="w-12 h-12 bg-gradient-warning rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Bell className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+                <div className="text-left">
+                  <div className="text-lg font-bold text-gray-900 group-hover:text-gradient transition-colors">
+                    Alertes Prix
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Notifications automatiques
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gradient group-hover:translate-x-1 transition-all" strokeWidth={2} />

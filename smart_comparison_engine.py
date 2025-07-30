@@ -2,9 +2,8 @@ import json
 import re
 from datetime import datetime, timedelta
 from statistics import mean, median
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+from collections import Counter
+import math
 import anthropic
 import os
 from sqlalchemy.orm import Session
@@ -205,22 +204,18 @@ class SmartComparisonEngine:
         return min(1.0, total_score)
 
     def _calculate_text_similarity(self, car1: Car, car2: Car) -> float:
-        """Calculate text similarity between car titles and descriptions"""
+        """Calculate text similarity between car titles and descriptions using cosine similarity"""
         
         try:
-            text1 = f"{car1.title} {car1.description or ''}"
-            text2 = f"{car2.title} {car2.description or ''}"
-            
-            # Use TF-IDF vectorization
-            vectorizer = TfidfVectorizer(stop_words='english', max_features=100)
+            text1 = f"{car1.title} {car1.description or ''}".lower()
+            text2 = f"{car2.title} {car2.description or ''}".lower()
             
             # Handle empty texts
             if not text1.strip() or not text2.strip():
                 return 0.3
             
-            tfidf_matrix = vectorizer.fit_transform([text1, text2])
-            similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-            
+            # Simple cosine similarity implementation
+            similarity = self._cosine_similarity(text1, text2)
             return float(similarity)
             
         except Exception:
@@ -235,6 +230,41 @@ class SmartComparisonEngine:
             union = len(keywords1.union(keywords2))
             
             return intersection / union if union > 0 else 0
+    
+    def _cosine_similarity(self, text1: str, text2: str) -> float:
+        """Calculate cosine similarity between two texts"""
+        
+        # Tokenize and count words
+        words1 = re.findall(r'\b[a-zA-ZÀ-ÿ]{2,}\b', text1)
+        words2 = re.findall(r'\b[a-zA-ZÀ-ÿ]{2,}\b', text2)
+        
+        # Create word frequency vectors
+        counter1 = Counter(words1)
+        counter2 = Counter(words2)
+        
+        # Get all unique words
+        all_words = set(counter1.keys()) | set(counter2.keys())
+        
+        if not all_words:
+            return 0.0
+        
+        # Create vectors
+        vector1 = [counter1.get(word, 0) for word in all_words]
+        vector2 = [counter2.get(word, 0) for word in all_words]
+        
+        # Calculate dot product
+        dot_product = sum(a * b for a, b in zip(vector1, vector2))
+        
+        # Calculate magnitudes
+        magnitude1 = math.sqrt(sum(a * a for a in vector1))
+        magnitude2 = math.sqrt(sum(b * b for b in vector2))
+        
+        # Avoid division by zero
+        if magnitude1 == 0 or magnitude2 == 0:
+            return 0.0
+        
+        # Calculate cosine similarity
+        return dot_product / (magnitude1 * magnitude2)
 
     def _calculate_condition_similarity(self, car1: Car, car2: Car, db: Session) -> float:
         """Calculate condition similarity based on parsed listings"""

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Text, Float, JSON
+from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Text, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -48,9 +48,9 @@ class GemScore(Base):
     
     car_id = Column(String, primary_key=True)
     gem_score = Column(Integer)  # 0-100
-    reasons = Column(JSON)
+    reasons = Column(Text)  # JSON as text
     profit_potential = Column(Integer)
-    risk_factors = Column(JSON)
+    risk_factors = Column(Text)  # JSON as text
     market_position = Column(String)  # "undervalued", "fair", "overpriced"
     confidence_level = Column(Float)  # 0.0-1.0
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -62,9 +62,9 @@ class PhotoAnalysis(Base):
     id = Column(String, primary_key=True)
     car_id = Column(String, nullable=False)
     photo_url = Column(String, nullable=False)
-    analysis_result = Column(JSON)
-    damage_detected = Column(JSON)
-    features_detected = Column(JSON)
+    analysis_result = Column(Text)  # JSON as text
+    damage_detected = Column(Text)  # JSON as text
+    features_detected = Column(Text)  # JSON as text
     condition_score = Column(Float)  # 0.0-10.0
     honesty_score = Column(Float)  # How honest the photos are
     analyzed_at = Column(DateTime, default=datetime.utcnow)
@@ -75,13 +75,13 @@ class ParsedListing(Base):
     
     car_id = Column(String, primary_key=True)
     raw_description = Column(Text)
-    parsed_data = Column(JSON)
-    service_history = Column(JSON)
-    detected_options = Column(JSON)
-    red_flags = Column(JSON)
-    positive_signals = Column(JSON)
+    parsed_data = Column(Text)  # JSON as text
+    service_history = Column(Text)  # JSON as text
+    detected_options = Column(Text)  # JSON as text
+    red_flags = Column(Text)  # JSON as text
+    positive_signals = Column(Text)  # JSON as text
     seller_credibility = Column(Float)  # 0-100
-    missing_information = Column(JSON)
+    missing_information = Column(Text)  # JSON as text
     parser_version = Column(String)
     parsed_at = Column(DateTime, default=datetime.utcnow)
 
@@ -91,10 +91,10 @@ class NegotiationStrategy(Base):
     
     id = Column(String, primary_key=True)
     car_id = Column(String, nullable=False)
-    strategy_data = Column(JSON)
-    seller_psychology = Column(JSON)
-    price_points = Column(JSON)
-    scripts = Column(JSON)
+    strategy_data = Column(Text)  # JSON as text
+    seller_psychology = Column(Text)  # JSON as text
+    price_points = Column(Text)  # JSON as text
+    scripts = Column(Text)  # JSON as text
     success_probability = Column(Float)
     cultural_approach = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -109,7 +109,7 @@ class NegotiationOutcome(Base):
     final_price = Column(Integer)
     discount_achieved = Column(Integer)
     approach_used = Column(String)
-    lessons_learned = Column(JSON)
+    lessons_learned = Column(Text)  # JSON as text
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # FEATURE 5: VIN Decoder & History
@@ -117,11 +117,11 @@ class VinData(Base):
     __tablename__ = "vin_data"
     
     vin = Column(String, primary_key=True)
-    decoded_data = Column(JSON)
-    equipment_list = Column(JSON)
-    recall_status = Column(JSON)
-    theft_check = Column(JSON)
-    import_history = Column(JSON)
+    decoded_data = Column(Text)  # JSON as text
+    equipment_list = Column(Text)  # JSON as text
+    recall_status = Column(Text)  # JSON as text
+    theft_check = Column(Text)  # JSON as text
+    import_history = Column(Text)  # JSON as text
     verified_at = Column(DateTime, default=datetime.utcnow)
 
 class VehicleHistory(Base):
@@ -130,10 +130,10 @@ class VehicleHistory(Base):
     id = Column(String, primary_key=True)
     car_id = Column(String, nullable=False)
     vin = Column(String)
-    history_timeline = Column(JSON)
+    history_timeline = Column(Text)  # JSON as text
     ownership_count = Column(Integer)
-    accident_history = Column(JSON)
-    service_records = Column(JSON)
+    accident_history = Column(Text)  # JSON as text
+    service_records = Column(Text)  # JSON as text
     authenticity_score = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -144,8 +144,8 @@ class MarketPulse(Base):
     id = Column(String, primary_key=True)
     make_model = Column(String, nullable=False)
     current_trend = Column(String)  # "rising", "stable", "falling"
-    price_prediction = Column(JSON)  # 3, 6, 12 month forecasts
-    seasonal_factors = Column(JSON)
+    price_prediction = Column(Text)  # JSON as text  # 3, 6, 12 month forecasts
+    seasonal_factors = Column(Text)  # JSON as text
     market_saturation = Column(Float)
     demand_score = Column(Integer)  # 0-100
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -159,8 +159,8 @@ class SocialSentiment(Base):
     make_model = Column(String, nullable=False)
     platform = Column(String)  # "forums", "social", "reviews"
     sentiment_score = Column(Float)  # -1.0 to 1.0
-    reputation_data = Column(JSON)
-    common_issues = Column(JSON)
+    reputation_data = Column(Text)  # JSON as text
+    common_issues = Column(Text)  # JSON as text
     owner_satisfaction = Column(Float)
     reliability_score = Column(Float)
     analyzed_at = Column(DateTime, default=datetime.utcnow)
@@ -171,9 +171,9 @@ class CarComparison(Base):
     
     id = Column(String, primary_key=True)
     base_car_id = Column(String, nullable=False)
-    similar_cars = Column(JSON)  # Array of similar car IDs with similarity scores
-    comparison_matrix = Column(JSON)
-    value_ranking = Column(JSON)
+    similar_cars = Column(Text)  # JSON as text  # Array of similar car IDs with similarity scores
+    comparison_matrix = Column(Text)  # JSON as text
+    value_ranking = Column(Text)  # JSON as text
     recommendation_reason = Column(Text)
     generated_at = Column(DateTime, default=datetime.utcnow)
 
@@ -184,9 +184,9 @@ class MaintenancePrediction(Base):
     id = Column(String, primary_key=True)
     car_id = Column(String, nullable=False)
     make_model = Column(String, nullable=False)
-    predicted_costs = Column(JSON)  # 1-5 year projections
-    maintenance_schedule = Column(JSON)
-    common_repairs = Column(JSON)
+    predicted_costs = Column(Text)  # JSON as text  # 1-5 year projections
+    maintenance_schedule = Column(Text)  # JSON as text
+    common_repairs = Column(Text)  # JSON as text
     parts_availability = Column(String)
     total_5year_cost = Column(Integer)
     reliability_grade = Column(String)  # A, B, C, D, F
@@ -203,8 +203,8 @@ class InvestmentScore(Base):
     liquidity_score = Column(Integer)  # How easy to sell
     rarity_factor = Column(Float)
     collector_interest = Column(Integer)
-    historical_performance = Column(JSON)
-    risk_assessment = Column(JSON)
+    historical_performance = Column(Text)  # JSON as text
+    risk_assessment = Column(Text)  # JSON as text
     hold_recommendation = Column(String)  # "short", "medium", "long"
     calculated_at = Column(DateTime, default=datetime.utcnow)
 

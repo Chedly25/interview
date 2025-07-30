@@ -13,10 +13,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from database import get_database, Car, Analysis, create_tables
+from enhanced_database import SessionLocal, Car, Analysis, create_all_tables
 from scraper import LeBonCoinScraper
 from scrapfly_scraper import ScrapflyLeboncoinScraper
-from enhanced_database import create_all_tables, GemScore, PhotoAnalysis, ParsedListing, NegotiationStrategy, VinData, VehicleHistory, MarketPulse, SocialSentiment, CarComparison, MaintenancePrediction, InvestmentScore
+from enhanced_database import GemScore, PhotoAnalysis, ParsedListing, NegotiationStrategy, VinData, VehicleHistory, MarketPulse, SocialSentiment, CarComparison, MaintenancePrediction, InvestmentScore
 from gem_detector import HiddenGemDetector
 from photo_analyzer import AIPhotoAnalyzer  
 from description_parser import IntelligentDescriptionParser
@@ -38,7 +38,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-create_tables()
+def get_database():
+    """Database dependency"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+create_all_tables()
 
 @app.get("/api/cars")
 def get_cars(
@@ -123,25 +131,25 @@ def analyze_car(car_id: str, db: Session = Depends(get_database)):
     client = anthropic.Anthropic(api_key=anthropic_api_key)
     
     prompt = f"""
-    Analysez cette annonce de voiture française:
+    Analysez cette annonce de voiture franaise:
     
     Titre: {car.title}
-    Prix: {car.price}€
-    Année: {car.year}
-    Kilométrage: {car.mileage} km
+    Prix: {car.price}
+    Anne: {car.year}
+    Kilomtrage: {car.mileage} km
     Carburant: {car.fuel_type}
     Description: {car.description}
     Type de vendeur: {car.seller_type}
-    Département: {car.department}
+    Dpartement: {car.department}
     
-    Fournissez une analyse structurée en JSON avec:
-    1. price_assessment: évaluation du prix (correct/élevé/bas)
+    Fournissez une analyse structure en JSON avec:
+    1. price_assessment: valuation du prix (correct/lev/bas)
     2. red_flags: signaux d'alarme potentiels
-    3. negotiation_tips: conseils de négociation
+    3. negotiation_tips: conseils de ngociation
     4. overall_score: note sur 10
     5. recommendation: recommandation d'achat
     
-    Répondez uniquement en JSON valide.
+    Rpondez uniquement en JSON valide.
     """
     
     try:
@@ -172,7 +180,7 @@ def run_scraper_background():
     """Run scraper in background with fallback strategy"""
     try:
         # Try Scrapfly-enhanced scraper first
-        logger.info("🚀 Attempting Scrapfly-enhanced scraping...")
+        logger.info("Attempting Scrapfly-enhanced scraping...")
         scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
         scrapfly_scraper.run()
         return {"status": "success", "message": "Scrapfly scraper completed successfully"}
@@ -180,13 +188,22 @@ def run_scraper_background():
         logger.warning(f"Scrapfly scraper failed: {e}")
         try:
             # Fallback to original scraper
-            logger.info("🔄 Falling back to original scraper...")
+            logger.info("Falling back to original scraper...")
             original_scraper = LeBonCoinScraper(department="69", max_cars=100)
             original_scraper.run()
             return {"status": "success", "message": "Original scraper completed successfully"}
         except Exception as e2:
             logger.error(f"Both scrapers failed: {e2}")
-            return {"status": "error", "message": f"All scrapers failed. Scrapfly: {str(e)}, Original: {str(e2)}"}
+            # Final fallback - ensure sample data exists
+            try:
+                logger.info("Creating sample data as final fallback...")
+                from create_sample_data import create_sample_data
+                count = create_sample_data()
+                logger.info(f"Sample data created: {count} cars")
+                return {"status": "success", "message": f"Sample data created as fallback: {count} cars"}
+            except Exception as e3:
+                logger.error(f"Sample data creation failed: {e3}")
+                return {"status": "error", "message": f"All fallback methods failed"}
 
 @app.post("/api/scrape")
 def trigger_scraper(background_tasks: BackgroundTasks):
@@ -198,31 +215,37 @@ def trigger_scraper(background_tasks: BackgroundTasks):
 def create_sample_data_endpoint(db: Session = Depends(get_database)):
     """Create sample car data for testing"""
     try:
-        from scraper import create_sample_data
-        create_sample_data()
+        from create_sample_data import create_sample_data
+        count = create_sample_data()
         
         # Count cars after creation
         car_count = db.query(Car).count()
         
         return {
             "status": "success", 
-            "message": f"Sample data created successfully. Total cars: {car_count}",
+            "message": f"Sample data created successfully. Created {count} cars, total: {car_count}",
+            "created_cars": count,
             "total_cars": car_count
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create sample data: {str(e)}")
+
+@app.get("/")
+def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Automotive Assistant API is running"}
 
 @app.post("/api/scrape/scrapfly")
 def trigger_scrapfly_scraper(background_tasks: BackgroundTasks, db: Session = Depends(get_database)):
     """Test the new Scrapfly-based scraper"""
     def run_scrapfly_scraper():
         try:
-            logger.info("🚀 Testing Scrapfly scraper...")
+            logger.info(" Testing Scrapfly scraper...")
             scraper = ScrapflyLeboncoinScraper(department="69", max_cars=20)  # Smaller batch for testing
             scraper.run()
-            logger.info("✅ Scrapfly scraper test completed")
+            logger.info(" Scrapfly scraper test completed")
         except Exception as e:
-            logger.error(f"❌ Scrapfly scraper test failed: {e}")
+            logger.error(f" Scrapfly scraper test failed: {e}")
     
     background_tasks.add_task(run_scrapfly_scraper)
     
@@ -241,37 +264,42 @@ def scraper_status(db: Session = Depends(get_database)):
     """Get scraper status and car count"""
     total_cars = db.query(Car).count()
     active_cars = db.query(Car).filter(Car.is_active == True).count()
+    recent_cars = db.query(Car).filter(
+        Car.first_seen > datetime.utcnow() - timedelta(hours=24)
+    ).count()
     latest_car = db.query(Car).order_by(Car.first_seen.desc()).first()
     
     return {
         "total_cars": total_cars,
         "active_cars": active_cars,
-        "latest_scrape": latest_car.first_seen.isoformat() if latest_car else None
+        "recent_cars_24h": recent_cars,
+        "last_scrape": latest_car.first_seen.isoformat() if latest_car else None,
+        "status": "healthy" if total_cars > 0 else "needs_data"
     }
 
 def automatic_scraper():
     """Run scraper every 30 minutes with fallback strategy"""
     while True:
         try:
-            print("🚗 Running automatic scraper...")
+            print("Running automatic scraper...")
             
             # Try Scrapfly scraper first
             try:
-                print("🚀 Using Scrapfly-enhanced scraper...")
+                print("Using Scrapfly-enhanced scraper...")
                 scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
                 scraper.run()
-                print("✅ Scrapfly automatic scraper completed")
+                print("Scrapfly automatic scraper completed")
             except Exception as e:
-                print(f"⚠️ Scrapfly scraper failed: {e}")
-                print("🔄 Falling back to original scraper...")
+                print(f"Scrapfly scraper failed: {e}")
+                print("Falling back to original scraper...")
                 
                 # Fallback to original scraper
                 original_scraper = LeBonCoinScraper(department="69", max_cars=100)
                 original_scraper.run()
-                print("✅ Original automatic scraper completed")
+                print("Original automatic scraper completed")
                 
         except Exception as e:
-            print(f"❌ All automatic scrapers failed: {e}")
+            print(f"All automatic scrapers failed: {e}")
         
         # Wait 30 minutes
         time.sleep(1800)
@@ -279,8 +307,24 @@ def automatic_scraper():
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup"""
-    print("🚀 Starting Automotive Assistant API...")
-    create_tables()
+    print("Starting Automotive Assistant API...")
+    create_all_tables()
+    
+    # Ensure we have data on startup
+    db = SessionLocal()
+    try:
+        car_count = db.query(Car).count()
+        if car_count == 0:
+            print("No cars found, creating sample data...")
+            from create_sample_data import create_sample_data
+            create_sample_data()
+            print("Sample data created!")
+        else:
+            print(f"Found {car_count} cars in database")
+    except Exception as e:
+        print(f"Error checking/creating data: {e}")
+    finally:
+        db.close()
     
     # Run scraper immediately on startup
     threading.Thread(target=run_scraper_background, daemon=True).start()
@@ -288,7 +332,7 @@ async def startup_event():
     # Start automatic scraper in background
     threading.Thread(target=automatic_scraper, daemon=True).start()
     
-    print("✅ API started with automatic scraping enabled")
+    print("API started with automatic scraping enabled")
 
 # Initialize AI analyzers
 gem_detector = HiddenGemDetector()
@@ -495,7 +539,7 @@ def generate_negotiation_strategy(car_id: str, background_tasks: BackgroundTasks
     def generate_and_save_strategy():
         strategy = negotiation_assistant.generate_negotiation_strategy(car, db)
         strategy_id = negotiation_assistant.save_strategy(car, strategy, db)
-        print(f"✅ Generated negotiation strategy {strategy_id} for car {car_id}")
+        print(f" Generated negotiation strategy {strategy_id} for car {car_id}")
     
     background_tasks.add_task(generate_and_save_strategy)
     return {"status": "started", "message": "Negotiation strategy generation started"}
@@ -534,9 +578,9 @@ def build_vehicle_history(car_id: str, background_tasks: BackgroundTasks, db: Se
     def build_and_save_history():
         try:
             history = vin_decoder.build_vehicle_history(car, db)
-            print(f"✅ Built vehicle history for car {car_id}")
+            print(f" Built vehicle history for car {car_id}")
         except Exception as e:
-            print(f"❌ Error building history for car {car_id}: {e}")
+            print(f" Error building history for car {car_id}: {e}")
     
     background_tasks.add_task(build_and_save_history)
     return {"status": "started", "message": "VIN analysis and history building started"}
@@ -572,9 +616,9 @@ def analyze_market_pulse(make_model: str, background_tasks: BackgroundTasks, db:
             pulse = market_predictor.analyze_market_pulse(make_model, db)
             if "error" not in pulse:
                 pulse_id = market_predictor.save_market_pulse(make_model, pulse, db)
-                print(f"✅ Analyzed market pulse for {make_model}, saved as {pulse_id}")
+                print(f" Analyzed market pulse for {make_model}, saved as {pulse_id}")
         except Exception as e:
-            print(f"❌ Error analyzing market pulse for {make_model}: {e}")
+            print(f" Error analyzing market pulse for {make_model}: {e}")
     
     background_tasks.add_task(analyze_and_save)
     return {"status": "started", "message": f"Market analysis started for {make_model}"}
@@ -596,9 +640,9 @@ def analyze_social_sentiment(make_model: str, background_tasks: BackgroundTasks,
     def analyze_and_save():
         try:
             sentiment = sentiment_analyzer.analyze_social_sentiment(make_model, db)
-            print(f"✅ Analyzed social sentiment for {make_model}")
+            print(f" Analyzed social sentiment for {make_model}")
         except Exception as e:
-            print(f"❌ Error analyzing sentiment for {make_model}: {e}")
+            print(f" Error analyzing sentiment for {make_model}: {e}")
     
     background_tasks.add_task(analyze_and_save)
     return {"status": "started", "message": f"Sentiment analysis started for {make_model}"}
@@ -682,34 +726,34 @@ def _generate_ai_summary(car, gem_analysis, parsed_desc, market_insights, sentim
     # Gem analysis insights
     if gem_analysis:
         if gem_analysis.gem_score > 75:
-            summary["key_insights"].append(f"🎯 Pépite détectée - Score: {gem_analysis.gem_score}/100")
+            summary["key_insights"].append(f" Ppite dtecte - Score: {gem_analysis.gem_score}/100")
             summary["overall_recommendation"] = "buy"
         elif gem_analysis.gem_score < 40:
-            summary["risk_factors"].append("Prix potentiellement élevé pour le marché")
+            summary["risk_factors"].append("Prix potentiellement lev pour le march")
     
     # Description analysis insights
     if parsed_desc:
         if parsed_desc.seller_credibility and parsed_desc.seller_credibility > 80:
-            summary["key_insights"].append("✅ Vendeur crédible avec description détaillée")
+            summary["key_insights"].append(" Vendeur crdible avec description dtaille")
         elif parsed_desc.seller_credibility and parsed_desc.seller_credibility < 50:
-            summary["risk_factors"].append("⚠️ Description peu crédible ou incomplète")
+            summary["risk_factors"].append(" Description peu crdible ou incomplte")
         
         if parsed_desc.red_flags and len(parsed_desc.red_flags) > 2:
-            summary["risk_factors"].append(f"🚩 {len(parsed_desc.red_flags)} signaux d'alarme détectés")
+            summary["risk_factors"].append(f" {len(parsed_desc.red_flags)} signaux d'alarme dtects")
     
     # Market insights
     if market_insights and "message" not in market_insights:
         if market_insights.get("current_trend") == "falling":
-            summary["opportunities"].append("📉 Marché en baisse - Opportunité d'achat")
+            summary["opportunities"].append(" March en baisse - Opportunit d'achat")
         elif market_insights.get("current_trend") == "rising":
-            summary["risk_factors"].append("📈 Marché en hausse - Prix pourraient augmenter")
+            summary["risk_factors"].append(" March en hausse - Prix pourraient augmenter")
     
     # Sentiment insights
     if sentiment_insights and "message" not in sentiment_insights:
         if sentiment_insights.get("overall_sentiment", 0) > 0.3:
-            summary["key_insights"].append("👥 Modèle très apprécié par les propriétaires")
+            summary["key_insights"].append(" Modle trs apprci par les propritaires")
         elif sentiment_insights.get("overall_sentiment", 0) < -0.2:
-            summary["risk_factors"].append("👥 Modèle avec des avis mitigés")
+            summary["risk_factors"].append(" Modle avec des avis mitigs")
     
     # Overall recommendation logic
     if len(summary["risk_factors"]) > len(summary["key_insights"]) + len(summary["opportunities"]):
@@ -722,8 +766,7 @@ def _generate_ai_summary(car, gem_analysis, parsed_desc, market_insights, sentim
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup"""
-    print("🚀 Starting Automotive Assistant API...")
-    create_tables()
+    print("Starting Automotive Assistant API...")
     create_all_tables()  # Create AI feature tables
     
     # Run scraper immediately on startup
@@ -732,7 +775,7 @@ async def startup_event():
     # Start automatic scraper in background
     threading.Thread(target=automatic_scraper, daemon=True).start()
     
-    print("✅ API started with all 10 AI features enabled")
+    print("API started with all 10 AI features enabled")
 
 # FEATURE 8: Smart Comparison Engine Endpoints
 @app.post("/api/cars/{car_id}/generate-comparison")
@@ -747,9 +790,9 @@ def generate_car_comparison(car_id: str, background_tasks: BackgroundTasks, db: 
             comparison = comparison_engine.generate_comparison_report(car, db)
             if "error" not in comparison:
                 comparison_id = comparison_engine.save_comparison(car, comparison, db)
-                print(f"✅ Generated comparison {comparison_id} for car {car_id}")
+                print(f" Generated comparison {comparison_id} for car {car_id}")
         except Exception as e:
-            print(f"❌ Error generating comparison for car {car_id}: {e}")
+            print(f" Error generating comparison for car {car_id}: {e}")
     
     background_tasks.add_task(generate_and_save_comparison)
     return {"status": "started", "message": "Smart comparison generation started"}
@@ -771,9 +814,9 @@ def predict_maintenance_costs(car_id: str, background_tasks: BackgroundTasks, db
         try:
             prediction = maintenance_prophet.predict_maintenance_costs(car, db)
             prediction_id = maintenance_prophet.save_maintenance_prediction(car, prediction, db)
-            print(f"✅ Generated maintenance prediction {prediction_id} for car {car_id}")
+            print(f" Generated maintenance prediction {prediction_id} for car {car_id}")
         except Exception as e:
-            print(f"❌ Error predicting maintenance for car {car_id}: {e}")
+            print(f" Error predicting maintenance for car {car_id}: {e}")
     
     background_tasks.add_task(predict_and_save)
     return {"status": "started", "message": "Maintenance cost prediction started"}
@@ -800,9 +843,9 @@ def calculate_investment_grade(car_id: str, background_tasks: BackgroundTasks, d
         try:
             investment_analysis = investment_scorer.calculate_investment_grade(car, db)
             score_id = investment_scorer.save_investment_score(car, investment_analysis, db)
-            print(f"✅ Generated investment score {score_id} for car {car_id}")
+            print(f" Generated investment score {score_id} for car {car_id}")
         except Exception as e:
-            print(f"❌ Error calculating investment grade for car {car_id}: {e}")
+            print(f" Error calculating investment grade for car {car_id}: {e}")
     
     background_tasks.add_task(calculate_and_save)
     return {"status": "started", "message": "Investment grade calculation started"}
@@ -828,7 +871,7 @@ def trigger_full_ai_analysis(car_id: str, background_tasks: BackgroundTasks, db:
     def run_full_analysis():
         """Run all AI analyses in sequence"""
         try:
-            print(f"🚀 Starting full AI analysis for car {car_id}")
+            print(f" Starting full AI analysis for car {car_id}")
             
             # 1. Gem Detection
             gem_analysis = gem_detector.calculate_gem_score(car, db)
@@ -880,10 +923,10 @@ def trigger_full_ai_analysis(car_id: str, background_tasks: BackgroundTasks, db:
             investment_scorer.save_investment_score(car, investment_analysis, db)
             
             db.commit()
-            print(f"✅ Completed full AI analysis for car {car_id}")
+            print(f" Completed full AI analysis for car {car_id}")
             
         except Exception as e:
-            print(f"❌ Error in full AI analysis for car {car_id}: {e}")
+            print(f" Error in full AI analysis for car {car_id}: {e}")
             db.rollback()
     
     background_tasks.add_task(run_full_analysis)
@@ -917,35 +960,35 @@ def run_scraper_manual(background_tasks: BackgroundTasks):
     def run_scraper_background():
         """Run scraper in background with fallback strategy"""
         try:
-            logger.info("🚀 Attempting Scrapfly-enhanced scraping...")
+            logger.info(" Attempting Scrapfly-enhanced scraping...")
             scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
             scrapfly_scraper.run()
-            logger.info("✅ Scrapfly scraper completed successfully")
+            logger.info(" Scrapfly scraper completed successfully")
             return {"status": "success", "message": "Scrapfly scraper completed successfully"}
         except Exception as e:
             logger.warning(f"Scrapfly scraper failed: {e}")
-            logger.info("🔄 Falling back to original scraper...")
+            logger.info(" Falling back to original scraper...")
             try:
                 # Fallback to original scraper
                 scraper = LeBonCoinScraper(department="69", max_cars=50)
                 cars = scraper.scrape_cars()
                 if cars:
                     scraper.save_to_database(cars)
-                    logger.info(f"✅ Fallback scraper saved {len(cars)} cars")
+                    logger.info(f" Fallback scraper saved {len(cars)} cars")
                 else:
-                    logger.warning("⚠️ Fallback scraper found no cars - creating sample data")
+                    logger.warning(" Fallback scraper found no cars - creating sample data")
                     from sample_data import create_sample_data
                     create_sample_data()
                 return {"status": "success", "message": "Fallback scraper completed"}
             except Exception as fallback_error:
-                logger.error(f"❌ Both scrapers failed: {fallback_error}")
+                logger.error(f" Both scrapers failed: {fallback_error}")
                 # Ensure we have sample data
                 try:
                     from sample_data import create_sample_data
                     create_sample_data()
-                    logger.info("✅ Sample data created as final fallback")
+                    logger.info(" Sample data created as final fallback")
                 except Exception as sample_error:
-                    logger.error(f"❌ Sample data creation failed: {sample_error}")
+                    logger.error(f" Sample data creation failed: {sample_error}")
                 return {"status": "error", "message": "All scrapers failed, sample data attempted"}
     
     background_tasks.add_task(run_scraper_background)
@@ -956,12 +999,12 @@ def test_scrapfly_scraper(background_tasks: BackgroundTasks):
     """Test Scrapfly scraper specifically"""
     def run_scrapfly_test():
         try:
-            logger.info("🧪 Testing Scrapfly scraper...")
+            logger.info(" Testing Scrapfly scraper...")
             scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=10)
             scrapfly_scraper.run()
-            logger.info("✅ Scrapfly test completed")
+            logger.info(" Scrapfly test completed")
         except Exception as e:
-            logger.error(f"❌ Scrapfly test failed: {e}")
+            logger.error(f" Scrapfly test failed: {e}")
     
     background_tasks.add_task(run_scrapfly_test)
     return {"status": "started", "message": "Scrapfly test started"}
@@ -972,12 +1015,12 @@ def start_background_scraper():
     def scraper_loop():
         while True:
             try:
-                logger.info("🤖 Auto-scraper starting...")
+                logger.info(" Auto-scraper starting...")
                 # Try Scrapfly first
                 try:
                     scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=50)
                     scrapfly_scraper.run()
-                    logger.info("✅ Auto-scraper (Scrapfly) completed")
+                    logger.info(" Auto-scraper (Scrapfly) completed")
                 except Exception as e:
                     logger.warning(f"Auto-scraper Scrapfly failed: {e}, trying fallback...")
                     # Fallback to original
@@ -985,19 +1028,19 @@ def start_background_scraper():
                     cars = scraper.scrape_cars()
                     if cars:
                         scraper.save_to_database(cars)
-                        logger.info(f"✅ Auto-scraper (fallback) saved {len(cars)} cars")
+                        logger.info(f" Auto-scraper (fallback) saved {len(cars)} cars")
                 
                 # Wait 30 minutes before next run
                 time.sleep(1800)  # 30 minutes
                 
             except Exception as e:
-                logger.error(f"❌ Auto-scraper error: {e}")
+                logger.error(f" Auto-scraper error: {e}")
                 time.sleep(300)  # Wait 5 minutes on error before retry
     
     # Start scraper thread
     scraper_thread = threading.Thread(target=scraper_loop, daemon=True)
     scraper_thread.start()
-    logger.info("🚀 Background auto-scraper started")
+    logger.info(" Background auto-scraper started")
 
 # Start background scraper on app startup
 start_background_scraper()

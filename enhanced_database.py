@@ -218,7 +218,7 @@ def get_database():
 def create_all_tables():
     """Create all tables including new AI features"""
     Base.metadata.create_all(bind=engine)
-    print("✅ All AI feature tables created successfully!")
+    print("All AI feature tables created successfully!")
 
 if __name__ == "__main__":
     create_all_tables()

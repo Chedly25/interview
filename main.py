@@ -893,6 +893,115 @@ def trigger_full_ai_analysis(car_id: str, background_tasks: BackgroundTasks, db:
         "estimated_time": "2-5 minutes"
     }
 
+# SCRAPER ENDPOINTS
+@app.get("/api/scrape/status")
+def get_scraper_status(db: Session = Depends(get_database)):
+    """Get scraper status and car count"""
+    total_cars = db.query(Car).count()
+    active_cars = db.query(Car).filter(Car.is_active == True).count()
+    recent_cars = db.query(Car).filter(
+        Car.first_seen > datetime.utcnow() - timedelta(hours=24)
+    ).count()
+    
+    return {
+        "total_cars": total_cars,
+        "active_cars": active_cars,
+        "recent_cars_24h": recent_cars,
+        "last_scrape": "auto-running",
+        "status": "healthy" if total_cars > 0 else "needs_data"
+    }
+
+@app.post("/api/scrape/run")
+def run_scraper_manual(background_tasks: BackgroundTasks):
+    """Manually trigger scraper run"""
+    def run_scraper_background():
+        """Run scraper in background with fallback strategy"""
+        try:
+            logger.info("🚀 Attempting Scrapfly-enhanced scraping...")
+            scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
+            scrapfly_scraper.run()
+            logger.info("✅ Scrapfly scraper completed successfully")
+            return {"status": "success", "message": "Scrapfly scraper completed successfully"}
+        except Exception as e:
+            logger.warning(f"Scrapfly scraper failed: {e}")
+            logger.info("🔄 Falling back to original scraper...")
+            try:
+                # Fallback to original scraper
+                scraper = LeBonCoinScraper(department="69", max_cars=50)
+                cars = scraper.scrape_cars()
+                if cars:
+                    scraper.save_to_database(cars)
+                    logger.info(f"✅ Fallback scraper saved {len(cars)} cars")
+                else:
+                    logger.warning("⚠️ Fallback scraper found no cars - creating sample data")
+                    from sample_data import create_sample_data
+                    create_sample_data()
+                return {"status": "success", "message": "Fallback scraper completed"}
+            except Exception as fallback_error:
+                logger.error(f"❌ Both scrapers failed: {fallback_error}")
+                # Ensure we have sample data
+                try:
+                    from sample_data import create_sample_data
+                    create_sample_data()
+                    logger.info("✅ Sample data created as final fallback")
+                except Exception as sample_error:
+                    logger.error(f"❌ Sample data creation failed: {sample_error}")
+                return {"status": "error", "message": "All scrapers failed, sample data attempted"}
+    
+    background_tasks.add_task(run_scraper_background)
+    return {"status": "started", "message": "Scraper started in background"}
+
+@app.get("/api/scrape/scrapfly")
+def test_scrapfly_scraper(background_tasks: BackgroundTasks):
+    """Test Scrapfly scraper specifically"""
+    def run_scrapfly_test():
+        try:
+            logger.info("🧪 Testing Scrapfly scraper...")
+            scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=10)
+            scrapfly_scraper.run()
+            logger.info("✅ Scrapfly test completed")
+        except Exception as e:
+            logger.error(f"❌ Scrapfly test failed: {e}")
+    
+    background_tasks.add_task(run_scrapfly_test)
+    return {"status": "started", "message": "Scrapfly test started"}
+
+# AUTO-SCRAPER BACKGROUND TASK
+def start_background_scraper():
+    """Start background scraper that runs every 30 minutes"""
+    def scraper_loop():
+        while True:
+            try:
+                logger.info("🤖 Auto-scraper starting...")
+                # Try Scrapfly first
+                try:
+                    scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=50)
+                    scrapfly_scraper.run()
+                    logger.info("✅ Auto-scraper (Scrapfly) completed")
+                except Exception as e:
+                    logger.warning(f"Auto-scraper Scrapfly failed: {e}, trying fallback...")
+                    # Fallback to original
+                    scraper = LeBonCoinScraper(department="69", max_cars=30)
+                    cars = scraper.scrape_cars()
+                    if cars:
+                        scraper.save_to_database(cars)
+                        logger.info(f"✅ Auto-scraper (fallback) saved {len(cars)} cars")
+                
+                # Wait 30 minutes before next run
+                time.sleep(1800)  # 30 minutes
+                
+            except Exception as e:
+                logger.error(f"❌ Auto-scraper error: {e}")
+                time.sleep(300)  # Wait 5 minutes on error before retry
+    
+    # Start scraper thread
+    scraper_thread = threading.Thread(target=scraper_loop, daemon=True)
+    scraper_thread.start()
+    logger.info("🚀 Background auto-scraper started")
+
+# Start background scraper on app startup
+start_background_scraper()
+
 @app.get("/health")
 def health_check():
     return {

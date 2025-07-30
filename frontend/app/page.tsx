@@ -16,8 +16,10 @@ import {
   RefreshCw,
   Search,
   Filter,
-  ArrowRight
+  ArrowRight,
+  Heart
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Car {
   id: string
@@ -192,6 +194,27 @@ export default function Home() {
                 <div className="text-3xl font-bold text-gradient">24/7</div>
                 <div className="text-sm text-gray-600 font-medium">Collecte automatique</div>
               </div>
+            </div>
+            
+            {/* Favorites Link */}
+            <div className="scale-in" style={{animationDelay: '0.3s'}}>
+              <Link 
+                href="/favorites" 
+                className="inline-flex items-center space-x-3 glass-card p-4 rounded-2xl hover:bg-red-50/50 transition-all group"
+              >
+                <div className="w-12 h-12 bg-gradient-secondary rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Heart className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+                <div className="text-left">
+                  <div className="text-lg font-bold text-gray-900 group-hover:text-gradient transition-colors">
+                    Mes Favoris
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Vos voitures sauvegardées
+                  </div>
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gradient group-hover:translate-x-1 transition-all" strokeWidth={2} />
+              </Link>
             </div>
           </div>
         </div>

@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Gauge, Fuel, MapPin, Eye } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar, Gauge, Fuel, MapPin, Eye, Heart } from 'lucide-react'
 
 interface Car {
   id: string
@@ -21,6 +22,34 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car }: CarCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false)
+
+  useEffect(() => {
+    checkFavoriteStatus()
+  }, [car.id])
+
+  const checkFavoriteStatus = () => {
+    const favorites = JSON.parse(localStorage.getItem('car-favorites') || '[]')
+    setIsFavorite(favorites.includes(car.id))
+  }
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const favorites = JSON.parse(localStorage.getItem('car-favorites') || '[]')
+    let updatedFavorites
+
+    if (isFavorite) {
+      updatedFavorites = favorites.filter((id: string) => id !== car.id)
+    } else {
+      updatedFavorites = [...favorites, car.id]
+    }
+
+    localStorage.setItem('car-favorites', JSON.stringify(updatedFavorites))
+    setIsFavorite(!isFavorite)
+  }
+
   const formatPrice = (price: number | null) => {
     if (!price) return 'Prix non spécifié'
     return new Intl.NumberFormat('fr-FR', {
@@ -53,6 +82,19 @@ export default function CarCard({ car }: CarCardProps) {
             <MapPin className="w-3 h-3 text-blue-500" strokeWidth={2} />
             <span className="text-xs font-medium text-gray-700">{car.department}</span>
           </div>
+          <button
+            onClick={toggleFavorite}
+            className={`absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-sm ${
+              isFavorite 
+                ? 'bg-red-500 text-white shadow-lg scale-110' 
+                : 'bg-white/90 text-gray-600 hover:bg-red-50 hover:text-red-500'
+            }`}
+          >
+            <Heart 
+              className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} 
+              strokeWidth={2} 
+            />
+          </button>
           <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
             <div className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
               <Eye className="w-5 h-5 text-gray-700" strokeWidth={2} />

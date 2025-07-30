@@ -179,6 +179,24 @@ def trigger_scraper(background_tasks: BackgroundTasks):
     background_tasks.add_task(run_scraper_background)
     return {"status": "started", "message": "Scraper started in background"}
 
+@app.post("/api/scrape/create-sample-data")
+def create_sample_data_endpoint(db: Session = Depends(get_database)):
+    """Create sample car data for testing"""
+    try:
+        from scraper import create_sample_data
+        create_sample_data()
+        
+        # Count cars after creation
+        car_count = db.query(Car).count()
+        
+        return {
+            "status": "success", 
+            "message": f"Sample data created successfully. Total cars: {car_count}",
+            "total_cars": car_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create sample data: {str(e)}")
+
 @app.get("/api/scrape/status")
 def scraper_status(db: Session = Depends(get_database)):
     """Get scraper status and car count"""

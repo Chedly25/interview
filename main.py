@@ -9,9 +9,13 @@ import os
 import anthropic
 import threading
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 from database import get_database, Car, Analysis, create_tables
 from scraper import LeBonCoinScraper
+from scrapfly_scraper import ScrapflyLeboncoinScraper
 from enhanced_database import create_all_tables, GemScore, PhotoAnalysis, ParsedListing, NegotiationStrategy, VinData, VehicleHistory, MarketPulse, SocialSentiment, CarComparison, MaintenancePrediction, InvestmentScore
 from gem_detector import HiddenGemDetector
 from photo_analyzer import AIPhotoAnalyzer  
@@ -165,13 +169,24 @@ def analyze_car(car_id: str, db: Session = Depends(get_database)):
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 def run_scraper_background():
-    """Run scraper in background"""
+    """Run scraper in background with fallback strategy"""
     try:
-        scraper = LeBonCoinScraper(department="69", max_cars=100)
-        scraper.run()
-        return {"status": "success", "message": "Scraper completed successfully"}
+        # Try Scrapfly-enhanced scraper first
+        logger.info("🚀 Attempting Scrapfly-enhanced scraping...")
+        scrapfly_scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
+        scrapfly_scraper.run()
+        return {"status": "success", "message": "Scrapfly scraper completed successfully"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        logger.warning(f"Scrapfly scraper failed: {e}")
+        try:
+            # Fallback to original scraper
+            logger.info("🔄 Falling back to original scraper...")
+            original_scraper = LeBonCoinScraper(department="69", max_cars=100)
+            original_scraper.run()
+            return {"status": "success", "message": "Original scraper completed successfully"}
+        except Exception as e2:
+            logger.error(f"Both scrapers failed: {e2}")
+            return {"status": "error", "message": f"All scrapers failed. Scrapfly: {str(e)}, Original: {str(e2)}"}
 
 @app.post("/api/scrape")
 def trigger_scraper(background_tasks: BackgroundTasks):
@@ -197,6 +212,30 @@ def create_sample_data_endpoint(db: Session = Depends(get_database)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create sample data: {str(e)}")
 
+@app.post("/api/scrape/scrapfly")
+def trigger_scrapfly_scraper(background_tasks: BackgroundTasks, db: Session = Depends(get_database)):
+    """Test the new Scrapfly-based scraper"""
+    def run_scrapfly_scraper():
+        try:
+            logger.info("🚀 Testing Scrapfly scraper...")
+            scraper = ScrapflyLeboncoinScraper(department="69", max_cars=20)  # Smaller batch for testing
+            scraper.run()
+            logger.info("✅ Scrapfly scraper test completed")
+        except Exception as e:
+            logger.error(f"❌ Scrapfly scraper test failed: {e}")
+    
+    background_tasks.add_task(run_scrapfly_scraper)
+    
+    # Get current car count
+    current_count = db.query(Car).count()
+    
+    return {
+        "status": "started", 
+        "message": "Scrapfly scraper test started in background",
+        "current_cars": current_count,
+        "scraper_type": "scrapfly_enhanced"
+    }
+
 @app.get("/api/scrape/status")
 def scraper_status(db: Session = Depends(get_database)):
     """Get scraper status and car count"""
@@ -211,15 +250,28 @@ def scraper_status(db: Session = Depends(get_database)):
     }
 
 def automatic_scraper():
-    """Run scraper every 30 minutes"""
+    """Run scraper every 30 minutes with fallback strategy"""
     while True:
         try:
             print("🚗 Running automatic scraper...")
-            scraper = LeBonCoinScraper(department="69", max_cars=100)
-            scraper.run()
-            print("✅ Automatic scraper completed")
+            
+            # Try Scrapfly scraper first
+            try:
+                print("🚀 Using Scrapfly-enhanced scraper...")
+                scraper = ScrapflyLeboncoinScraper(department="69", max_cars=100)
+                scraper.run()
+                print("✅ Scrapfly automatic scraper completed")
+            except Exception as e:
+                print(f"⚠️ Scrapfly scraper failed: {e}")
+                print("🔄 Falling back to original scraper...")
+                
+                # Fallback to original scraper
+                original_scraper = LeBonCoinScraper(department="69", max_cars=100)
+                original_scraper.run()
+                print("✅ Original automatic scraper completed")
+                
         except Exception as e:
-            print(f"❌ Automatic scraper error: {e}")
+            print(f"❌ All automatic scrapers failed: {e}")
         
         # Wait 30 minutes
         time.sleep(1800)
